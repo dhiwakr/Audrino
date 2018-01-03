@@ -1,3 +1,6 @@
+
+//Make sure the AP to which client and server are connected doesn't have wireless isolation turned ON.
+
 #include <ESP8266WiFi.h>
  
 const char* ssid = "MARK-42";
