@@ -35,7 +35,7 @@ void setup() {
   // Setup the pin for output:
   pinMode(relayPin, OUTPUT);
   digitalWrite(relayPin, HIGH); // Start with light on
-//  digitalWrite(relayPin, LOW); // Start with light off
+  //  digitalWrite(relayPin, LOW); // Start with light off
 
   // Set the UUIDs and socket information:
   prepareIds();
