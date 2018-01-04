@@ -12,7 +12,7 @@ void respondToSearch();
 void startHttpServer();
 
 // Change these to whatever you'd prefer:
-String device_name = "christmas lights";  // Name of device
+String device_name = "warm lights";  // Name of device
 int relayPin = D1;                        // Pin to toggle
 bool debug = false;                       // If you want debug messages
 bool squawk = true;                       // For on/off messages
