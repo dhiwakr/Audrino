@@ -12,7 +12,7 @@ void respondToSearch();
 void startHttpServer();
 
 // Change these to whatever you'd prefer:
-String device_name = "warm lights";  // Name of device
+String device_name = "fancy lights";  // Name of device
 int relayPin = D1;                        // Pin to toggle
 bool debug = false;                       // If you want debug messages
 bool squawk = true;                       // For on/off messages
@@ -167,7 +167,7 @@ void startHttpServer() {
           Serial.println("Got on request");
       }
 
-      digitalWrite(relayPin, HIGH); // turn on relay with voltage HIGH
+      digitalWrite(relayPin, LOW); // turn on relay with voltage HIGH
     }
 
     if(request.indexOf("<BinaryState>0</BinaryState>") > 0) {
@@ -175,7 +175,7 @@ void startHttpServer() {
           Serial.println("Got off request");
       }
 
-      digitalWrite(relayPin, LOW); // turn on relay with voltage LOW
+      digitalWrite(relayPin, HIGH); // turn on relay with voltage LOW
     }
 
     HTTP.send(200, "text/plain", "");
