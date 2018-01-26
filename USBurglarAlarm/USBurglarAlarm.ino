@@ -46,7 +46,7 @@ void setup() {
     pinMode(blueLed, OUTPUT);
     triggered = false;
     flagCount = 0;
-    Serial.println("Calibration Begin");
+    Serial.println("\nCalibration Begin");
     Serial.print(".");
     digitalWrite(redLed, HIGH);
     Serial.print(".");
@@ -82,15 +82,12 @@ int counter = 0;
     triggerCount = triggerCount + 1;
     while(counter < 21)
     {
-        //Floor Lamp Sequencing
-        if(counter % 5 == 0){
-            if(counter % 2 == 0){
-              IntruderLightsOFF();
-            }
-            else{
+          if(counter== 5){
               IntruderLightsON();
             }
-        }
+            if(counter  == 20){
+                IntruderLightsOFF();
+            }
 
 
         digitalWrite(redLed, HIGH);
