@@ -1,6 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiUdp.h>
+#include <WiFiManager.h>
+#include <WiFiUdp.h>
 #include <functional>
 
 void prepareIds();
@@ -390,4 +392,13 @@ void turnOnRelay() {
 
 void turnOffRelay() {
   digitalWrite(relayPin,HIGH );  // turn off relay with voltage LOW
+}
+
+void configModeCallback(WiFiManager *myWiFiManager) {
+  Serial.println("Entered config mode");
+  Serial.println("Soft AP's IP Address:");
+  Serial.println(WiFi.softAPIP());
+  Serial.println("WiFi Manager: Please connect to AP:");
+  Serial.println(myWiFiManager->getConfigPortalSSID());
+  Serial.println("To setup WiFi Configuration");
 }
