@@ -2,11 +2,6 @@
 #include <ESP8266HTTPClient.h>
 
 
-
-const char* ssid = "Level1304";
-const char* password = "crimson-king";
-const char* SHA1Fingerprint = "C0:5D:08:5E:E1:3E:E0:66:F3:79:27:1A:CA:1F:FC:09:24:11:61:62";
-
 // defines pins numbers
 const int trigPin = 2;  //D4
 const int echoPin = 0;  //D3
@@ -16,20 +11,27 @@ const int irPin= 14;  //D5
 
 // defines variables
 boolean triggered = false;
-
 long duration = 0;
 int distance = 0;
 int flagCount = 0;
-
 int triggerCount = 0;
-
 int distanceSetup = 0;
 int distanceLoop = 0;
+long randNumber;
+
+//************************* WiFi Access Point *********************************
+const char* ssid = "Level1304";
+const char* password = "crimson-king";
+const char* SHA1Fingerprint = "C0:5D:08:5E:E1:3E:E0:66:F3:79:27:1A:CA:1F:FC:09:24:11:61:62";
+const char* FIREBASE_HOST "jarvis-b9456.firebaseio.com"
+const char* FIREBASE_AUTH "WHIFeCo8OOiJkDdNLAjIJqgsWGq8xCNjCEaRpbfu"
 
 
+//*********************************** Setup *********************************
 void setup() {
-
     Serial.begin(115200); // Starts the serial communication
+    Serial.print("\n\n*****Setup Begin*****");
+    delay(2000);
     if(WiFi.status() != WL_CONNECTED){
         Serial.println("Wifi Connection Initialised");
         Serial.print("\nConnecting");
@@ -39,8 +41,8 @@ void setup() {
              Serial.print(".");
        }
     }
-    Serial.println("\nWifi Connected");
-    Serial.println("IP address: ");
+    Serial.print("\nWifi Connected");
+    Serial.print("\nIP address: ");
     Serial.print(WiFi.localIP());
 
     pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
@@ -50,7 +52,7 @@ void setup() {
     pinMode(blueLed, OUTPUT);
     triggered = false;
     flagCount = 0;
-    Serial.println("\nCalibration Begin");
+    Serial.print("\nCalibration Begin");
     Serial.print(".");
     digitalWrite(redLed, HIGH);
     Serial.print(".");
@@ -62,53 +64,75 @@ void setup() {
 
     distanceSetup = CalibrateSensor();
 
-    Serial.println("\nCalibration Complete ");
+    Serial.println("Calibration Complete ");
     digitalWrite(redLed, LOW);
     digitalWrite(blueLed, LOW);
-    Serial.println("\nSetup Distance (in Cms) : ");
+    Serial.print("\nSetup Distance (in Cms) : ");
     Serial.print(distanceSetup);
+	
+	Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
 }
 
 void loop() {
-
-  if (distanceSetup < 10){ //Incorrect Setup; Reinitialize
-    setup();
+  //	
+	
+	
+  if (distanceSetup < 10){
+    setup();//Re-Run Callibration - Incorrect previous setup
   }
-
+  randNumber = random(10000, 90000);
   int counter = 0;
   if (triggered) {
       postToIFTTT();
       triggerCount = triggerCount + 1;
       while(counter < 21){
-          if(counter== 5){
-              IntruderLightsON();
-            }
-            if(counter  == 20){
-                IntruderLightsOFF();
-            }
-          digitalWrite(redLed, HIGH);
-          digitalWrite(blueLed, LOW);
-          delay(500);
-          digitalWrite(redLed, LOW);
-          digitalWrite(blueLed, HIGH);
-          delay(500);
+          TriggerSequence(counter);
           counter = counter + 1;
         }
       setup();
     }
-
-    else {
-      if(digitalRead(irPin) == HIGH){
-          distanceLoop = CalibrateSensor(); //Happens in 200msec after IR triggered
-          if (distanceLoop < distanceSetup - 20) { //Relaxation Limit 20cms
-              triggered = true;
-              }
+  else {
+    if(digitalRead(irPin) == HIGH){
+       Serial.print("\nIR Movement on Sequence : ");
+       Serial.print(randNumber);
+       distanceLoop = CalibrateSensor();
+       if (distanceLoop < distanceSetup - 30) { //Relaxation Limit 20cms
+             if(flagCount > 0){ //Trigger on 2 (n) successive flags - Set Value as n-2
+             triggered = true;
+             Serial.print("\nTriggered on Sequence : ");
+             Serial.print(randNumber);
+             Serial.print("\nSetup Distance : ");
+             Serial.print(distanceSetup);
+             Serial.print("\nLoop Distance : ");
+             Serial.print(distanceLoop);
+			 
+			 
+			 //Push data to firebaseio
+			 if (Firebase.failed()) {
+				Serial.print("setting /number failed:");
+				Serial.println(Firebase.error());  
+			}else{
+			    Firebase.setFloat("Triggered on Sequence :", randNumber);	
+				Firebase.setFloat("Setup Distance :", distanceSetup);
+				Firebase.setFloat("Loop Distance :", distanceLoop);
+			}
+			 
+			 
+			 
+             }
+             else{
+               flagCount = flagCount + 1;
+             }
+             }
+           else{
+           flagCount = 0;
+            }
           }
       }
-  }
+}
 
-int CalibrateSensor()
-{
+
+int CalibrateSensor(){
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
@@ -119,6 +143,21 @@ int CalibrateSensor()
   distance= duration*0.034/2;
   delay(200);
   return distance;
+}
+
+void TriggerSequence(int count){
+  if(count== 5){
+        IntruderLightsON();
+      }
+      if(count  == 20){
+          IntruderLightsOFF();
+      }
+  digitalWrite(redLed, HIGH);
+  digitalWrite(blueLed, LOW);
+  delay(500);
+  digitalWrite(redLed, LOW);
+  digitalWrite(blueLed, HIGH);
+  delay(500);
 }
 
 void postToIFTTT(){
